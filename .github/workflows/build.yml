@@ -1,30 +1,48 @@
+
 name: Build MoonCity
 
 on:
-  workflow_dispatch:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - name: Set up Java 17
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Install Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: '17'
+
+      - name: Install Gradle 8.8
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
 
       - name: Extract source
-        run: unzip -o src.zip -d .
+        run: |
+          if [ -f src.zip ]; then
+            unzip -o src.zip -d .
+          fi
 
-      - name: Build
-        run: gradle build
+      - name: Check project files
+        run: |
+          test -f build.gradle
+          test -f settings.gradle
+          test -d src/main/java
 
-      - name: Upload JAR
+      - name: Build MoonCity
+        run: gradle build --no-daemon
+
+      - name: Upload MoonCity JAR
         uses: actions/upload-artifact@v4
         with:
-          name: mooncity-jar
+          name: MoonCity-JAR
           path: build/libs/*.jar
+          if-no-files-found: error
